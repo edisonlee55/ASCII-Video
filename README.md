@@ -1,5 +1,6 @@
 # ASCII Video
 
+![Bad Apple ASCII GIF](bad-apple/bad-apple-ascii.gif)
 ## What is it
 
 ASCII Video is a command line tool which allows you to convert movies into ASCII sprite sheets and then play them back in the terminal. It uses [ffmpeg](https://ffmpeg.org/) to break up the video into a series of images, which then are converted to individual ASCII art frames using [image-to-ascii](https://github.com/IonicaBizau/image-to-ascii). It then builds those frames up into a Javascript array as text, and writes the resulting array to an output file that can then be read in by the program and played back in the terminal with the help of [log-update](https://github.com/sindresorhus/log-update).

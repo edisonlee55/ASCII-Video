@@ -40,7 +40,8 @@ program
     shell.exec(`cd /tmp && mkdir __sprite_cli_output && cd ${dir}`)
 
     if (
-      shell.exec(`ffmpeg -i ${program.args[0]} ${TMP_DIR_PATH}image%d.jpg`)
+      //shell.exec(`ffmpeg -i ${program.args[1]} -vf fps=30 ${TMP_DIR_PATH}image%d.jpg`)
+      shell.exec(`ffmpeg -i ${program.args[1]} -vf ${TMP_DIR_PATH}image%d.jpg`)
         .code !== 0
     ) {
       // stop loading animation
@@ -85,14 +86,17 @@ program
 
     lineReader.on('line', async line => {
       lineReader.pause()
-      const fragment = yaml.safeLoad(line)[0]
+      const fragment = yaml.loadAll(line)[0]
       frame += fragment
 
       if (re.test(frame)) {
         const frames = frame.split(END_OF_FRAME_ID)
-        for (let frameItem of frames) {
-          await delay(frameRate)
-          if (frameItem.length) logUpdate(frameItem)
+        for (let [i, frameItem] of frames.entries()) {
+          delay(frameRate)
+          if (frameItem.length) {
+            //logUpdate("Playing frame:" + i);
+            logUpdate(frameItem)
+          }
         }
 
         frame = ''
@@ -105,8 +109,8 @@ program
 program.parse(process.argv)
 if (!program.args.length) program.help()
 
-function delay(time) {
-  return new Promise(resolve => setTimeout(resolve, time))
+function delay(ms) {
+  return Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
 }
 
 /*=====================================================
@@ -123,12 +127,13 @@ function createSprites(files, outputTo, idx, sprites) {
       TMP_DIR_PATH + files[idx],
       {
         image_type: 'jpg',
+        colored: true
       },
       (err, converted) => {
         if (err) {
           console.log(warningMsg(err))
         } else {
-          sprites.push(converted + '\nzzzzzzzzzzzzzzzzzzzzzzz')
+          sprites.push(converted + END_OF_FRAME_ID)
 
           // write to disk before sprites array gets too large
           if (sprites.length > 500) {
@@ -148,7 +153,7 @@ function createSprites(files, outputTo, idx, sprites) {
 }
 
 function appendToFile(outputTo, sprites) {
-  const outFile = yaml.safeDump(sprites)
+  const outFile = yaml.dump(sprites)
 
   fs.appendFile(outputTo, outFile, err => {
     if (err) return console.log(warningMsg(err))
